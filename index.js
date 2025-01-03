@@ -216,6 +216,7 @@ app.use(cors());
 app.get('/rooms', (req, res) => {
     res.send(rooms);
   });
+  
 
 
 app.post('/rooms', (req, res) =>{
