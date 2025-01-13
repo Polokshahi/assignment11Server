@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const bodyParser = require('body-parser');
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -9,6 +10,7 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.use(bodyParser.json());
 
 // Room data to insert
 const rooms = [
@@ -214,6 +216,14 @@ const rooms = [
   }
 ]
 
+
+app.get("/", (req, res) => {
+  res.send("Server is Running...")
+});
+// app.get("/rooms", (req, res) => {
+//   res.send('all room data :', rooms)
+// });
+
 // MongoDB Connection URI
 const uri = "mongodb+srv://polokshahi338:gWn4xgYwZgokCga7@cluster0.f3bbt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
@@ -243,7 +253,7 @@ async function run() {
     }
 
     // Route to get all rooms
-    app.get('/rooms', async (req, res) => {
+    app.get('/allroom', async (req, res) => {
       try {
         const rooms = await hotelCollection.find().toArray();
         res.json(rooms);
@@ -253,41 +263,22 @@ async function run() {
     });
 
 
-    // app.post('/myBooking', (req, res) => {
-
-    //   const myBooking = req.body;
-    //   console.log(myBooking);
-    //   res.json({ message: 'Your booking has been confirmed!' });
-
-    //   hotelCollection.insertOne(myBooking);
-
-    // })
-
-    // app.get('/myBooking', async (req, res) => {
-    //   try {
-    //     const myBooking = await hotelCollection.find().toArray();
-    //     res.json(myBooking);
-    //   } catch (error) {
-    //     res.status(500).json({ error: 'Failed to fetch booking data' });
-    //   }
-    // });
+    
 
 
     app.post('/book-room', (req, res) => {
       const { roomId, selectedDate } = req.body;
-
-      const room = room.find((r) => r.roomId == roomId);
-
-      if (!room) {
+      const room = rooms.find(r => r.roomId === parseInt(roomId));
+    
+      if (room) {
+        // Save booking data (you can update the availability or add a bookings array)
+        room.availability = false;
+        room.bookingDate = selectedDate;
+    
+        return res.status(200).json({ success: true, message: 'Room booked successfully!' });
+      } else {
         return res.status(404).json({ success: false, message: 'Room not found' });
       }
-
-      if (!room.availability) {
-        return res.status(400).json({ success: false, message: 'Room is already booked' });
-      }
-
-      room.availability = false;
-      return res.json({ success: true, message: 'Room booked successfully' });
     });
 
 
@@ -323,6 +314,26 @@ async function run() {
 
 
 
+    
+    app.delete('/cancel-booking', (req, res) => {
+      const { roomId } = req.body;
+    
+      if (!roomId) {
+        return res.status(400).json({ success: false, message: 'Room ID is required.' });
+      }
+    
+      const index = rooms.findIndex((booking) => booking.roomId == roomId);
+    
+      if (index !== -1) {
+        rooms.splice(index, 1);
+        return res.status(200).json({ success: true, message: 'Booking cancelled successfully.' });
+      } else {
+        return res.status(404).json({ success: false, message: 'Booking not found.' });
+      }
+    });
+
+
+
 
 
 
@@ -349,6 +360,33 @@ async function run() {
     console.error('Error connecting to MongoDB:', error);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Start the MongoDB connection and API server
 run().catch(console.dir);
