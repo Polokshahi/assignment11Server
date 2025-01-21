@@ -247,95 +247,6 @@ async function run() {
     const bookingCollection = database.collection('Bookings');
     const reviewCollection = database.collection('Reviews');
 
-    // Insert room data into MongoDB (if not already present)
-    // const roomCount = await hotelCollection.countDocuments();
-    // if (roomCount === 0) {
-    //   await hotelCollection.insertMany(rooms);
-    //   console.log('Room data inserted into MongoDB');
-    // } else {
-    //   console.log('Room data already exists in MongoDB');
-    // }
-
-    // // Route to get all rooms
-    // app.get('/allroom', async (req, res) => {
-    //   try {
-    //     const rooms = await hotelCollection.find().toArray();
-    //     res.json(rooms);
-    //   } catch (error) {
-    //     res.status(500).json({ error: 'Failed to fetch room data' });
-    //   }
-    // });
-
-
-
-
-
-    // app.post('/book-room', (req, res) => {
-    //   const { roomId, selectedDate } = req.body;
-    //   const room = rooms.find(r => r.roomId === parseInt(roomId));
-
-    //   if (room) {
-    //     // Save booking data (you can update the availability or add a bookings array)
-    //     room.availability = false;
-    //     room.bookingDate = selectedDate;
-
-    //     return res.status(200).json({ success: true, message: 'Room booked successfully!' });
-    //   } else {
-    //     return res.status(404).json({ success: false, message: 'Room not found' });
-    //   }
-    // });
-
-
-    // app.get('/book-room', (req, res) => {
-    //   const bookedRooms = rooms.filter((room) => !room.availability);
-
-    //   if (bookedRooms.length === 0) {
-    //     return res.status(404).json({ success: false, message: 'No rooms have been booked yet' });
-    //   }
-
-    //   return res.json({ success: true, bookedRooms });
-    // });
-
-
-
-
-    // app.post('/update-booking-date', (req, res) => {
-    //   const { roomId, newDate } = req.body;
-
-    //   console.log(roomId, newDate);
-
-    //   const room = rooms.find((r) => r.roomId == roomId);
-    //   if (!room) {
-    //     return res.status(404).json({ success: false, message: 'Room not found' });
-    //   }
-
-    //   // Update the booking date in the room data (or database)
-    //   room.bookedDate = newDate;
-
-    //   // Respond with success
-    //   return res.json({ success: true, message: 'Booking date updated successfully', updatedRoom: room });
-    // });
-
-
-
-
-    // app.delete('/cancel-booking', (req, res) => {
-    //   const { roomId } = req.body;
-
-    //   if (!roomId) {
-    //     return res.status(400).json({ success: false, message: 'Room ID is required.' });
-    //   }
-
-    //   const index = rooms.findIndex((booking) => booking.roomId == roomId);
-
-    //   if (index !== -1) {
-    //     rooms.splice(index, 1);
-    //     return res.status(200).json({ success: true, message: 'Booking cancelled successfully.' });
-    //   } else {
-    //     return res.status(404).json({ success: false, message: 'Booking not found.' });
-    //   }
-    // });
-
 
 
 
@@ -362,7 +273,12 @@ async function run() {
     })
 
     app.get('/bookings', async (req, res) => {
-      const cursor = bookingCollection.find();
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { bookedBy: email };
+      }
+      const cursor = bookingCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     })
@@ -390,6 +306,57 @@ async function run() {
         res.status(500).send({ error: 'Failed to fetch booked dates.' });
       }
     });
+
+
+
+  
+
+    // Express route to update the end date of a booking
+    app.put('/bookings/update-end-date/:id', async (req, res) => {
+      const bookingId = req.params.id;
+      const { endDate } = req.body;
+
+      try {
+        const result = await bookingCollection.updateOne(
+          { _id: new ObjectId(bookingId) },
+          { $set: { endDate: new Date(endDate) } } // Update the end date in MongoDB
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        res.status(200).json({ message: 'Booking updated successfully' });
+      } catch (error) {
+        console.error('Error updating booking end date:', error);
+        res.status(500).json({ message: 'Error updating booking end date' });
+      }
+    });
+
+
+
+
+
+    // delete
+
+    app.delete('/bookings/cancel/:id', async (req, res) => {
+      const bookingId = req.params.id;
+
+      try {
+        const result = await bookingCollection.deleteOne({ _id: new ObjectId(bookingId) });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        res.status(200).json({ message: 'Booking canceled successfully' });
+      } catch (error) {
+        console.error('Error cancelling booking:', error);
+        res.status(500).json({ message: 'Error cancelling booking' });
+      }
+    });
+
+
 
 
 
