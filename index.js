@@ -1,9 +1,9 @@
+require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const bodyParser = require('body-parser');
-require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -34,7 +34,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect to MongoDB
-    await client.connect();
+    // await client.connect();
     const database = client.db("BookHotel");
     const roomCollection = database.collection('BookData');
     const bookingCollection = database.collection('Bookings');
@@ -167,7 +167,7 @@ async function run() {
 
 
     // Ping MongoDB to confirm connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Successfully connected to MongoDB!");
 
   } catch (error) {
